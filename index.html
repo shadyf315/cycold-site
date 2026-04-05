@@ -1,0 +1,215 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYCOLD Minecraft Server</title>
+  <meta name="description" content="Официальная страница Minecraft сервера CYCOLD. IP, правила и онлайн-статус.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Exo+2:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div id="siteCaptchaOverlay" class="overlay" hidden>
+    <div class="modal">
+      <h2>Проверка входа</h2>
+      <p class="muted-small">Подтверди, что ты не бот.</p>
+      <p id="siteCaptchaQuestion" class="captcha-question">...</p>
+      <input id="siteCaptchaAnswer" class="admin-input" type="text" placeholder="Ответ" autocomplete="off">
+      <div class="actions">
+        <button id="siteCaptchaSubmit" class="btn btn-primary" type="button">Войти на сайт</button>
+      </div>
+      <p id="siteCaptchaStatus" class="muted-small">Ожидание ответа.</p>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">CYCOLD</div>
+    <div class="topbar-actions">
+      <a class="top-btn" href="#join">Как зайти</a>
+      <button id="openAdminBtn" class="top-btn top-btn-accent" type="button">Админка</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero reveal">
+      <p class="label">MINECRAFT VANILLA 1.16.5</p>
+      <h1>СЕРВЕР CYCOLD</h1>
+      <p class="subtitle">Выживание с друзьями, whitelist и быстрый старт через TLauncher.</p>
+      <div class="status-line">
+        <span id="statusDot" class="status-dot checking" aria-hidden="true"></span>
+        <span id="statusText">Проверяем статус...</span>
+      </div>
+      <div class="actions">
+        <button id="copyIpBtn" class="btn btn-primary">Скопировать IP</button>
+        <button id="refreshStatusBtn" class="btn btn-ghost btn-small">Обновить статус</button>
+      </div>
+      <p class="ip-line">IP: <span data-server-address>192.168.0.103:25565</span></p>
+      <p id="statusHint" class="muted-small">Автообновление каждые 30 секунд.</p>
+    </section>
+
+    <section class="stats reveal">
+      <article class="card">
+        <h2>IP</h2>
+        <p data-server-address>192.168.0.103:25565</p>
+      </article>
+      <article class="card">
+        <h2>Версия</h2>
+        <p>1.16.5</p>
+      </article>
+      <article class="card">
+        <h2>Игроки</h2>
+        <p id="playersCount">— / —</p>
+      </article>
+      <article class="card">
+        <h2>Доступ</h2>
+        <p>TLauncher / Offline</p>
+      </article>
+    </section>
+
+    <section id="join" class="panel reveal">
+      <h2>Как зайти</h2>
+      <ol>
+        <li>Открой Minecraft 1.16.5 (TLauncher).</li>
+        <li>Выбери «Сетевая игра» → «Добавить сервер».</li>
+        <li>Вставь адрес: <strong data-server-address>192.168.0.103:25565</strong>.</li>
+        <li>Если не пускает, попроси добавить твой ник в whitelist.</li>
+      </ol>
+    </section>
+
+    <section id="rules" class="panel reveal">
+      <h2>Правила сервера</h2>
+      <ul>
+        <li>Не ломать чужие постройки без согласия.</li>
+        <li>Не использовать читы и X-Ray.</li>
+        <li>Не спамить и не токсичить в чате.</li>
+        <li>Уважать игроков и админов.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>CYCOLD Server • <span id="copyState">готов к запуску</span></p>
+  </footer>
+
+  <section id="adminScreen" class="admin-screen" hidden>
+    <div class="admin-shell">
+      <div class="admin-screen-top">
+        <button id="adminBackBtn" class="btn btn-ghost" type="button">Назад</button>
+        <h2>Админ-панель CYCOLD</h2>
+      </div>
+
+      <p id="adminGlobalStatus" class="muted-small">Панель закрыта.</p>
+
+      <div id="adminCaptchaBlock" class="panel admin-panel" hidden>
+        <h3>Капча админки</h3>
+        <p id="adminCaptchaQuestion" class="captcha-question">...</p>
+        <input id="adminCaptchaAnswer" class="admin-input" type="text" placeholder="Ответ" autocomplete="off">
+        <div class="actions">
+          <button id="adminCaptchaSubmit" class="btn btn-primary btn-small" type="button">Проверить</button>
+        </div>
+        <p id="adminCaptchaStatus" class="muted-small">Подтверди вход в админку.</p>
+      </div>
+
+      <div id="adminLoginBlock" class="panel admin-panel" hidden>
+        <h3>Вход по паролю</h3>
+        <form id="adminLoginForm" class="admin-form">
+          <input id="adminPassword" class="admin-input" type="password" placeholder="Пароль администратора" autocomplete="off" required>
+          <button class="btn btn-primary" type="submit">Войти</button>
+        </form>
+        <p id="adminLoginStatus" class="muted-small">Доступ закрыт.</p>
+      </div>
+
+      <div id="adminControls" class="panel admin-panel" hidden>
+        <h3>Управление сервером</h3>
+        <label class="admin-label" for="adminServerAddress">IP сервера на сайте</label>
+        <input id="adminServerAddress" class="admin-input" type="text" placeholder="Например 192.168.0.103:25565">
+
+        <label class="admin-label" for="adminStatusAddress">Адрес для онлайн-статуса</label>
+        <input id="adminStatusAddress" class="admin-input" type="text" placeholder="Например play.yourserver.ru:25565">
+
+        <label class="admin-label" for="adminApiUrl">Локальный API панели</label>
+        <input id="adminApiUrl" class="admin-input" type="text" placeholder="http://127.0.0.1:8787">
+
+        <div class="actions">
+          <button id="saveAdminBtn" class="btn btn-primary btn-small" type="button">Сохранить</button>
+          <button id="adminRefreshBtn" class="btn btn-ghost btn-small" type="button">Обновить игроков</button>
+          <button id="logoutAdminBtn" class="btn btn-ghost btn-small" type="button">Выйти</button>
+        </div>
+
+        <p id="adminApiStatus" class="muted-small">API не проверен.</p>
+        <p class="muted-small">Статус сервера в карточке сайта работает только по публичному адресу (не 192.168/10.x/127.0.0.1).</p>
+        <p class="muted-small">Настройки сохраняются только в этом браузере.</p>
+
+        <h3 class="subhead">Игроки</h3>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ник</th>
+                <th>IP</th>
+                <th>Онлайн</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="playersTableBody">
+              <tr><td colspan="4">Нет данных</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">Бан по нику</h3>
+        <div class="actions">
+          <input id="banPlayerInput" class="admin-input inline-input" type="text" placeholder="Ник игрока">
+          <input id="banPlayerReasonInput" class="admin-input inline-input" type="text" placeholder="Причина (опционально)">
+          <button id="banPlayerBtn" class="btn btn-primary btn-small" type="button">Забанить ник</button>
+        </div>
+
+        <h3 class="subhead">Бан по IP</h3>
+        <div class="actions">
+          <input id="banIpInput" class="admin-input inline-input" type="text" placeholder="IP адрес">
+          <input id="banIpReasonInput" class="admin-input inline-input" type="text" placeholder="Причина (опционально)">
+          <button id="banIpBtn" class="btn btn-primary btn-small" type="button">Забанить IP</button>
+        </div>
+
+        <h3 class="subhead">Бан-лист (ники)</h3>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ник</th>
+                <th>Причина</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody id="bannedPlayersBody">
+              <tr><td colspan="3">Пусто</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subhead">Бан-лист (IP)</h3>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>IP</th>
+                <th>Причина</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody id="bannedIpsBody">
+              <tr><td colspan="3">Пусто</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="./script.js"></script>
+</body>
+</html>
