@@ -6,6 +6,8 @@ const ADMIN_PASSWORD = "24112013";
 const STORAGE_SERVER_ADDRESS = "cycold_server_address";
 const STORAGE_STATUS_ADDRESS = "cycold_status_address";
 const STORAGE_API_URL = "cycold_admin_api";
+const STORAGE_SITE_CAPTCHA_OK = "cycold_site_captcha_ok";
+const STORAGE_ADMIN_CAPTCHA_OK = "cycold_admin_captcha_ok";
 
 let currentServerAddress = localStorage.getItem(STORAGE_SERVER_ADDRESS) || DEFAULT_SERVER_ADDRESS;
 let currentStatusAddress = localStorage.getItem(STORAGE_STATUS_ADDRESS) || currentServerAddress;
@@ -200,7 +202,7 @@ async function updateServerStatus() {
 }
 
 function createLocalCaptcha(scope) {
-  const key = `cycold_local_captcha_${scope}`;
+  const key = scope === "admin" ? STORAGE_ADMIN_CAPTCHA_OK : STORAGE_SITE_CAPTCHA_OK;
   if (localStorage.getItem(key) === "ok") {
     return { required: false, mode: "local", challengeId: "", question: "" };
   }
@@ -236,12 +238,14 @@ async function getCaptchaChallenge(scope) {
 }
 
 async function verifyCaptcha(scope, mode, challengeId, answer) {
+  const storageKey = scope === "admin" ? STORAGE_ADMIN_CAPTCHA_OK : STORAGE_SITE_CAPTCHA_OK;
+
   if (mode === "local") {
     const expected = localCaptchaExpected[scope];
     if (String(answer).trim() !== String(expected).trim()) {
       throw new Error("Неверный ответ");
     }
-    localStorage.setItem(`cycold_local_captcha_${scope}`, "ok");
+    localStorage.setItem(storageKey, "ok");
     return;
   }
 
@@ -255,6 +259,8 @@ async function verifyCaptcha(scope, mode, challengeId, answer) {
   if (!response.ok) {
     throw new Error("Неверный ответ");
   }
+
+  localStorage.setItem(storageKey, "ok");
 }
 
 async function ensureSiteCaptcha() {
@@ -523,10 +529,21 @@ async function handleSiteCaptchaSubmit() {
 
   try {
     await verifyCaptcha("site", siteCaptchaMode, siteCaptchaId, answer);
-    siteCaptchaStatus.textContent = "Проверка пройдена.";
+    siteCaptchaStatus.textContent = "Проверка пройдена. Добро пожаловать!";
     siteCaptchaOverlay.hidden = true;
-  } catch {
-    siteCaptchaStatus.textContent = "Неверный ответ, попробуй снова.";
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (siteCaptchaMode === "api") {
+      const local = createLocalCaptcha("site");
+      siteCaptchaMode = local.mode;
+      siteCaptchaId = local.challengeId;
+      siteCaptchaQuestion.textContent = local.question;
+      siteCaptchaStatus.textContent = "API капчи недоступен. Реши локальную капчу.";
+      siteCaptchaAnswer.value = "";
+      return;
+    }
+
+    siteCaptchaStatus.textContent = message.includes("Неверный") ? "Неверный ответ, попробуй снова." : "Ошибка проверки. Попробуй снова.";
     await ensureSiteCaptcha();
   }
 }
@@ -545,8 +562,19 @@ async function handleAdminCaptchaSubmit() {
     adminCaptchaStatus.textContent = "Капча пройдена.";
     showAdminBlock("login");
     adminGlobalStatus.textContent = "Введи пароль администратора.";
-  } catch {
-    adminCaptchaStatus.textContent = "Неверный ответ, попробуй снова.";
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (adminCaptchaMode === "api") {
+      const local = createLocalCaptcha("admin");
+      adminCaptchaMode = local.mode;
+      adminCaptchaId = local.challengeId;
+      adminCaptchaQuestion.textContent = local.question;
+      adminCaptchaStatus.textContent = "API капчи недоступен. Реши локальную капчу.";
+      adminCaptchaAnswer.value = "";
+      return;
+    }
+
+    adminCaptchaStatus.textContent = message.includes("Неверный") ? "Неверный ответ, попробуй снова." : "Ошибка проверки. Попробуй снова.";
     await prepareAdminGate();
   }
 }
